@@ -1,5 +1,8 @@
 // ANSI TEXT ATTRIBUTES
-#define ANSI_CLEAR "\e[2J"
+#define ANSI_CLEAR_SCREEN "\e[2J"
+#define ANSI_ERASE_LINE "\e[K"
+#define ANSI_SAVE_CURSOR "\e[s"
+#define ANSI_RESTORE_CURSOR "\e[u"
 #define ANSI_RESET "\e[0m"
 #define ANSI_BOLD "\e[1m"
 #define ANSI_BLINK "\e[5m"
@@ -25,7 +28,7 @@
 #define ANSI_BG_WHITE "\e[47m"
 
 // Function Prototypes
-void setCursor (int, int);
+void setCursor (int x, int y);
 void clearScreen ();
 char getch ();
 char getche ();

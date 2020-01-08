@@ -1,5 +1,6 @@
-#include "includes.h"
-#include "terminal.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <termios.h>
 
 static struct termios oldSettings, newSettings;
 
@@ -10,11 +11,6 @@ void setCursor (int x, int y) {
 
 /* Clear terminal screen */
 void clearScreen () {
-    /*
-    Alternative way:
-        printf("\e[2J");
-        fflush(stdout);
-    */
     system("clear");
 }
 

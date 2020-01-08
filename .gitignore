@@ -4,3 +4,6 @@
 # ignore object files and output files
 *.o
 *.out
+
+# ignore output file
+main

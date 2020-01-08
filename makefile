@@ -1,13 +1,16 @@
-all : main.out
+all : main
 
-main.out : terminal.o PacManGame.o
-	gcc -o main.out terminal.o PacManGame.o
+main : terminal.o game.o gui.o
+	gcc -o main terminal.o game.o gui.o
+
+gui.o : gui.c
+	gcc -c gui.c
 
 terminal.o : terminal.c
 	gcc -c terminal.c
 
-PacManGame.o : PacManGame.c
-	gcc -c PacManGame.c
+game.o : game.c
+	gcc -c game.c
 
 clean :
-	rm *.o main.out
+	rm *.o main
