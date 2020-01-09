@@ -4,6 +4,7 @@
 #include "gui.h"
 #include "core.h"
 #include "config.h"
+#include "linkedlist.h"
 //#include "ai.h"
 
 void greetUser () {
@@ -38,7 +39,7 @@ int main () {
     greetUser();
     showRules();
     initMap();
-    //gameLoop(NULL);
+    gameLoop(NULL);
     /*
     if( playOrAI() ) // user playing
         gameLoop(NULL);
