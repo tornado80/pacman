@@ -13,6 +13,7 @@ void delay (int mili_seconds, int seconds) {
 /* Set the terminal cursor at (x, y) */
 void setCursor (int x, int y) {
     printf("\e[%d;%df", y, x);
+    fflush(stdout);
 }
 
 /* Clear terminal screen using ANSI */

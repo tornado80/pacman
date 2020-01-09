@@ -7,10 +7,26 @@
 #include "config.h"
 #include "linkedlist.h"
 
-static char* mapFileName; 
-static char* map;
+static char* mapFileName = NULL; 
+static char* map = NULL;
 static int mapRows;
 static int mapColumns;
+static int playMode; // 1 is manual, 2 is auto(ai)
+
+/* starting position is (1, 1) */
+typedef struct {
+    int x;
+    int y;
+} Position;
+
+static struct {
+    Position location;
+    int score;
+    int path;
+    int apples;
+    int time;
+} PacMan; 
+
 
 /* Check if char is a valid in map */
 static int isMapValidCharacter (char ch) {
@@ -51,7 +67,7 @@ static int importMap () {
 
     // Now reading file
     char ch;
-    int maxLineLength = 0, thisLineLength = 0, mapFileLength = 0, lineNumbers = 0;
+    int maxLineLength = 0, thisLineLength = 0, mapFileLength = 0, lineNumbers = 0, countPacMan = 0;
     LinkedListData newChar;
     LinkedListNodePtr mapFile = NULL, curMapFileChar;    
     while ((ch = getc(stream)) != EOF) {
@@ -75,6 +91,18 @@ static int importMap () {
             thisLineLength = 0;
         } else {
             if (isMapValidCharacter(ch)) {
+                // ensure there is one pacman in board als setup pacman
+                if (ch == '0') {
+                    countPacMan++;
+                    Position p = {mapFileLength, 0};
+                    PacMan.location = p;
+                    PacMan.apples = 0;
+                    PacMan.path = 0;
+                    PacMan.score = 0;
+                    PacMan.time = 0;
+                }
+                if (countPacMan > 1)
+                    return 5;
                 // update line length and add character to linked list
                 thisLineLength++;
                 newChar.char_value = ch;
@@ -88,6 +116,9 @@ static int importMap () {
         }
     }
     fclose(stream);
+    // multi pacman error
+    if (countPacMan != 1)
+        return 6;
 
     // Importing map
     map = malloc(sizeof(char) * mapFileLength);
@@ -99,6 +130,10 @@ static int importMap () {
     mapRows = lineNumbers;
     mapColumns = maxLineLength;
 
+    // Update pacman exact position
+    PacMan.location.y = PacMan.location.x/mapColumns + 1;
+    PacMan.location.x = PacMan.location.x%mapColumns == 0 ? mapColumns : PacMan.location.x%mapColumns;    
+
     // Free memory allocated by linked list
     deleteLinkedList(&mapFile);
 
@@ -107,16 +142,22 @@ static int importMap () {
     printDelayed(ANSI_BG_GREEN ANSI_FG_WHITE "Reading file successfully finished!" ANSI_RESET, 50, 0);
     delay(0, 1);
 
-    // Draw map and get ready for game loop
-    //drawMap();
     return 1;      
 }
 
 /* Prompts user for map file and initializes map array. */
 void initMap () {
+    // declarations
     int feedback, mapFileNameLength;
     LinkedListData newChar;
     LinkedListNodePtr fileName = NULL, curFileNameChar;
+
+    // clear previous games data
+    if (map != NULL)
+        free(map);
+    if (mapFileName != NULL)
+        free(mapFileName);
+
     do {
         // Prompt for file name
         clearScreen();
@@ -159,6 +200,168 @@ void initMap () {
         } else if (feedback == 4) {
             printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nMap grid limit is set and is exceeded. [COLS>" STR(MAP_MAX_COLS) "]" ANSI_RESET ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
             getch();
+        } else if (feedback == 5) {
+            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nMore than one PacMan found in the file." ANSI_RESET ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
+            getch();
+        } else if (feedback == 6) {
+            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nNo PacMan found in the file." ANSI_RESET ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
+            getch();
         }       
     } while (1);
+}
+
+void setPlayMode () {
+    clearScreen();
+    printDelayed(
+                ANSI_BOLD "Please type 1 or 2 based on below playing modes:\n"ANSI_RESET
+                "\t " ANSI_BOLD "1." ANSI_RESET " Manual (user plays).\n"
+                "\t " ANSI_BOLD "2." ANSI_RESET " AI (computer plays).\n"
+                ANSI_SAVE_CURSOR ANSI_BLINK "? " ANSI_RESET
+                , 10, 0);
+    // prompt user
+    char ch;
+    do {
+        ch = getche();
+        if (ch == '1') {
+            break;
+        } else if (ch == '2') {
+            break;
+        } else if (ch == '\e') {
+            getch();
+            getch();
+            printDelayed(ANSI_RESTORE_CURSOR ANSI_ERASE_LINE ANSI_RESTORE_CURSOR ANSI_BG_RED ANSI_FG_WHITE "Invalid." ANSI_RESET ANSI_BLINK"? " ANSI_RESET, 10, 0);
+        } else {
+            printDelayed(ANSI_RESTORE_CURSOR ANSI_ERASE_LINE ANSI_RESTORE_CURSOR ANSI_BG_RED ANSI_FG_WHITE "Invalid." ANSI_RESET ANSI_BLINK"? " ANSI_RESET, 10, 0);
+        }
+    } while (1);
+
+    if (ch == '1') {
+        playMode = 1;
+        printDelayed(ANSI_RESTORE_CURSOR ANSI_ERASE_LINE ANSI_RESTORE_CURSOR ANSI_BG_GREEN ANSI_FG_WHITE "Playing mode set to manual." ANSI_RESET, 10, 0);
+    } else {
+        playMode = 2;
+        printDelayed(ANSI_RESTORE_CURSOR ANSI_ERASE_LINE ANSI_RESTORE_CURSOR ANSI_BG_GREEN ANSI_FG_WHITE "Playing mode set to automatic." ANSI_RESET, 10, 0);
+    }
+}
+
+/* Check if given position is in map */
+static int isInMap (Position pos) {
+    if (pos.x >= 1 && pos.x <= mapColumns && pos.y >= 1 && pos.y <= mapRows)
+        return 1;
+    else
+        return 0;
+}
+
+/* Return linear format of a position used in indexing map */
+static char * toLinear (Position pos) {
+    return map + mapColumns * (pos.y - 1) - 1 + pos.x;
+}
+
+/* Check if given position is a block */
+static int isBlock (Position pos) {
+    if (isInMap(pos))
+        if (*toLinear(pos) == '#')
+            return 1;
+        else
+            return 0;
+    else
+        return 0;
+}
+
+/* Check if given position is a path */
+static int isPath (Position pos) {
+    if (isInMap(pos))
+        if (*toLinear(pos) == '1')
+            return 1;
+        else
+            return 0;
+    else
+        return 0;
+}
+
+/* Check if given position is pacman */
+static int isPacMan (Position pos) {
+    if (isInMap(pos))
+        if (*toLinear(pos) == '0')
+            return 1;
+        else
+            return 0;
+    else
+        return 0;
+}
+
+/* Check if given position is apple */
+static int isApple (Position pos) {
+    if (isInMap(pos))
+        if (*toLinear(pos) == '*')
+            return 1;
+        else
+            return 0;
+    else
+        return 0;
+}
+
+static void drawFrame () {
+    clearScreen();
+    printDelayed(B2RD, 5, 0);
+    for (int i = 0; i < mapColumns; i++)
+        printDelayed(B2H, 5, 0);
+    printDelayed(B2LD, 5, 0);
+    for (int i = 0; i < mapRows; i++) {
+        setCursor(1, i + 2);
+        printDelayed(B2V, 5, 0);
+        setCursor(mapColumns + 2, i + 2);
+        printDelayed(B2V, 5, 0);        
+    }
+    setCursor(1, mapColumns + 2);
+    printDelayed(B2RU, 5, 0);
+    for (int i = 0; i < mapColumns; i++)
+        printDelayed(B2H, 5, 0);
+    printDelayed(B2LU, 5, 0);        
+}
+
+void drawMap () {
+    // loading splash and drawing board frame
+    clearScreen();
+    printf(ANSI_BG_CYAN ANSI_FG_WHITE ANSI_BOLD);
+    fflush(stdout);
+    printDelayed("Loading Map ...", 100, 0);
+    printf(ANSI_RESET);
+    fflush(stdout);    
+    delay(0, 1);
+    drawFrame();
+
+    // drawing map
+    Position pos;
+    for (int i = 0; i < mapRows; i++) {
+        for (int j = 0; j < mapColumns; j++) {
+            setCursor(2 + i, 2 + j);
+            pos.x = j + 1;
+            pos.y = i + 1;
+            if (isBlock(pos)) {
+                printf(ANSI_BG_RED ANSI_FG_WHITE);
+                printDelayed("#", 50, 0);
+                printf(ANSI_RESET);
+                fflush(stdout);
+            }
+            if (isPath(pos)) {
+                printf(ANSI_BG_WHITE ANSI_FG_BLACK);
+                printDelayed("1", 50, 0);
+                printf(ANSI_RESET);
+                fflush(stdout);
+            }
+            if (isApple(pos)) {
+                printf(ANSI_BG_GREEN ANSI_FG_WHITE);
+                printDelayed("*", 50, 0);
+                printf(ANSI_RESET);
+                fflush(stdout);
+            }
+            if (isPacMan(pos)) {
+                printf(ANSI_BG_YELLOW ANSI_FG_BLACK);
+                printDelayed("0", 50, 0);
+                printf(ANSI_RESET);
+                fflush(stdout);
+            }                                    
+        }
+    }
 }

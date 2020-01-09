@@ -25,6 +25,12 @@
 #define ANSI_BOLD "\e[1m"
 #define ANSI_BLINK "\e[5m"
 
+/* ANSI KEYBOARD */
+#define ANSI_KEY_UP "\e[A"
+#define ANSI_KEY_DOWN "\e[B"
+#define ANSI_KEY_RIGHT "\e[C"
+#define ANSI_KEY_LEFT "\e[D"
+
 /* ANSI FOREGROUND COLORS */
 #define ANSI_FG_BLACK "\e[30m"
 #define ANSI_FG_RED "\e[31m"
