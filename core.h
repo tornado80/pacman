@@ -1,4 +1,4 @@
 void initMap ();
 void setPlayMode ();
-void gameLoop (int (*) (char *));
+void gameLoop ();
 void drawMap ();

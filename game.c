@@ -5,7 +5,6 @@
 #include "core.h"
 #include "config.h"
 #include "linkedlist.h"
-//#include "ai.h"
 
 void greetUser () {
     clearScreen();
@@ -23,7 +22,7 @@ void showRules () {
     printDelayed("The goal is that " ANSI_FG_YELLOW "Pac-Man " ANSI_RESET "eats all " ANSI_FG_GREEN "green apples " ANSI_RESET "in the game board.\n"
                  "Note that:\n"
                  "\t1. The faster you go, the better you score. Also shortest path has its own points.\n"
-                 "\t2. You can not pass through the houses with shaded blocks(#) or walls(" B2H ", " B2V ", " B4 ", " B3D ", " B3L ", " B3R ", " B3U ", " B3D ", ...).\n"
+                 "\t2. You can not pass through the houses with sharps(#).\n"
                  "\t3. Empty houses for free walk are indicated with white houses with \"1\"s in them.\n"
                  "\t4. Apples are indicated with " ANSI_FG_GREEN "green" ANSI_RESET " houses and an asterisks(*).\n"
                  "\t5. Finally, " ANSI_FG_YELLOW "Pac-Man" ANSI_RESET " is a " ANSI_FG_YELLOW "yellow" ANSI_RESET " \"0\".\n"
@@ -41,5 +40,5 @@ int main () {
     initMap();
     setPlayMode();
     drawMap();
-    //gameLoop(NULL);
+    gameLoop();
 }
