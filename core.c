@@ -420,7 +420,7 @@ static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
                     eraseLine(mapRows + 3);
                     printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET);
                     fflush(stdout);                      
-                    delay(500, 0);
+                    delay(200, 0);
                     return 0;
                 }
             } else {
@@ -428,7 +428,7 @@ static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
                 eraseLine(mapRows + 3);
                 printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET);
                 fflush(stdout);  
-                delay(500, 0);              
+                delay(200, 0);              
                 return 0;
             }
         } else {
@@ -436,7 +436,7 @@ static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
             eraseLine(mapRows + 3);
             printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET);
             fflush(stdout);  
-            delay(500, 0);
+            delay(200, 0);
             return 0;
         }
     } else {
@@ -448,7 +448,7 @@ static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
         eraseLine(mapRows + 3);
         printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "PacMan can not move in that direction. Try again." ANSI_RESET);
         fflush(stdout);  
-        delay(500, 0);
+        delay(200, 0);
         return 0;
     } else {
         // update board
@@ -496,6 +496,6 @@ void gameLoop () {
     }
     setCursor(1, mapRows + 3);
     eraseLine(mapRows + 3);
-    printDelayed(ANSI_BG_GREEN ANSI_FG_WHITE ANSI_BOLD "Pacman has eaten all the apples. YOU WON. Congratulations.\n" ANSI_RESET, 20, 0);
+    printDelayed(ANSI_BG_GREEN ANSI_FG_WHITE ANSI_BOLD "Pacman has eaten all the apples. Congratulations.\n" ANSI_RESET, 20, 0);
     
 }
