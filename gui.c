@@ -10,6 +10,17 @@ void delay (int mili_seconds, int seconds) {
     nanosleep(&ts, NULL);    
 }
 
+/* Set the terminal cursor at (x, y) */
+void setCursor (int x, int y) {
+    printf("\e[%d;%df", y, x);
+}
+
+/* Clear terminal screen using ANSI */
+void ansiClearScreen () {
+    printf(ANSI_CLEAR_SCREEN);
+    fflush(stdout);
+}
+
 /* Artistic printing each character of a string after specified delay */
 void printDelayed (char* str, int mili_seconds_delay, int seconds_delay) {
     while (*str != '\0') {

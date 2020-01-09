@@ -1,0 +1,1 @@
+#define MAP_MAX_ROWS 20

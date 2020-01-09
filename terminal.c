@@ -4,12 +4,10 @@
 
 static struct termios oldSettings, newSettings;
 
-/* Set the terminal cursor at (x, y) */
-void setCursor (int x, int y) {
-    printf("\e[%d;%df", y, x);
-}
-
-/* Clear terminal screen */
+/* 
+Clear terminal screen using system call 
+NOTE: this returns to beginning of line.
+*/
 void clearScreen () {
     system("clear");
 }
