@@ -55,6 +55,13 @@ static int importMap () {
     LinkedListData newChar;
     LinkedListNodePtr mapFile = NULL, curMapFileChar;    
     while ((ch = getc(stream)) != EOF) {
+        //Check Grid config
+        if (MAP_GRID_LIMIT) {
+            if (lineNumbers > MAP_MAX_ROWS)
+                return 3;
+            if (maxLineLength > MAP_MAX_COLS)
+                return 4; 
+        }
         // Analysis of read char
         if (ch == '\n') {
             lineNumbers++;
@@ -146,6 +153,12 @@ void initMap () {
         } else if (feedback == -1) {
             printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nFile could not be opened." ANSI_RESET ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
             getch();
-        }
+        } else if (feedback == 3) {
+            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nMap grid limit is set and is exceeded. [ROWS>" STR(MAP_MAX_ROWS) "]" ANSI_RESET ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
+            getch();
+        } else if (feedback == 4) {
+            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nMap grid limit is set and is exceeded. [COLS>" STR(MAP_MAX_COLS) "]" ANSI_RESET ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
+            getch();
+        }       
     } while (1);
 }
