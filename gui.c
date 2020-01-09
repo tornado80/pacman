@@ -38,3 +38,14 @@ void eraseLine (int line_number) {
     printf(ANSI_RESTORE_CURSOR);
     fflush(stdout);
 }
+
+/* 
+Erase current line
+Cursor should be at the beginning of line
+*/
+void eraseCurrentLine () {
+    printf(ANSI_SAVE_CURSOR);
+    printf(ANSI_ERASE_LINE);
+    printf(ANSI_RESTORE_CURSOR);
+    fflush(stdout);
+}

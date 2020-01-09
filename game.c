@@ -36,10 +36,10 @@ void showRules () {
 } 
 
 int main () {
-    greetUser();
-    showRules();
+    //greetUser();
+    //showRules();
     initMap();
-    gameLoop(NULL);
+    //gameLoop(NULL);
     /*
     if( playOrAI() ) // user playing
         gameLoop(NULL);
