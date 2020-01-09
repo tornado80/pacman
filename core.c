@@ -28,7 +28,7 @@ static int importMap () {
     // Telling user opening file
     printf(ANSI_SAVE_CURSOR);
     fflush(stdout);
-    printDelayed(ANSI_BLINK ANSI_BG_CYAN ANSI_FG_YELLOW "Opening ", 50, 0);
+    printDelayed(ANSI_BG_CYAN ANSI_FG_WHITE "Opening ", 50, 0);
     printDelayed(mapFileName, 50, 0);
     printf(ANSI_RESET);
     fflush(stdout);    
@@ -46,7 +46,7 @@ static int importMap () {
     printDelayed(ANSI_BG_GREEN ANSI_FG_WHITE "File opened successfully!" ANSI_RESET, 50, 0);
     delay(0, 1);
     clearScreen();
-    printDelayed(ANSI_BLINK ANSI_BG_CYAN ANSI_FG_YELLOW "Reading file" ANSI_RESET, 50, 0);
+    printDelayed(ANSI_BG_CYAN ANSI_FG_WHITE "Reading file" ANSI_RESET, 50, 0);
     delay(0, 1);
 
     // Now reading file
@@ -138,13 +138,13 @@ void initMap () {
         if (feedback == 1)
             break;
         else if (feedback == 0) {
-            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nIllegal characters detected in the file." ANSI_RESET ANSI_BOLD ANSI_BLINK " Press any key to continue: " ANSI_RESET, 10, 0);
+            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nIllegal characters detected in the file." ANSI_RESET ANSI_BOLD  " Press any key to continue: " ANSI_RESET, 10, 0);
             getch();
         } else if (feedback == 2) {
-            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nLines length in the file are not equal. Note there should be exactly one enter after each line (including the last one)." ANSI_RESET ANSI_BLINK ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
+            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nLines length in the file are not equal. Note there should be exactly one enter after each line (including the last one)." ANSI_RESET ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
             getch();
         } else if (feedback == -1) {
-            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nFile could not be opened." ANSI_RESET ANSI_BLINK ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
+            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nFile could not be opened." ANSI_RESET ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
             getch();
         }
     } while (1);
