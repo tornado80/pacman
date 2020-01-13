@@ -117,14 +117,20 @@ static int importMap () {
                 //simple check            
                 if (countPacMan > 1)
                     return 5;
-            } else {
+            } else {                    
                 fclose(stream);
                 deleteLinkedList(&mapFile);
+                if (ch == 13) // carriage return
+                    return 7;
                 return 0;
             }
         }
     }
     fclose(stream);
+    // check for last \n in file 
+    if (thisLineLength != 0)
+        return 8;
+
     // multi pacman error
     if (countPacMan != 1)
         return 6;
@@ -140,7 +146,7 @@ static int importMap () {
     mapColumns = maxLineLength;
 
     // Update pacman exact position
-    PacMan.location.y = PacMan.location.x/mapColumns + 1;
+    PacMan.location.y = PacMan.location.x/mapColumns + (PacMan.location.x%mapColumns == 0 ? 0 : 1);
     PacMan.location.x = PacMan.location.x%mapColumns == 0 ? mapColumns : PacMan.location.x%mapColumns;    
 
     // Free memory allocated by linked list
@@ -215,7 +221,13 @@ void initMap () {
         } else if (feedback == 6) {
             printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nNo PacMan found in the file." ANSI_RESET ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
             getch();
-        }       
+        } else if (feedback == 7) {
+            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nIndicated file seems to have carriage returns. They are illegal. Maybe your file is MS-Windows based." ANSI_RESET ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
+            getch();
+        } else if (feedback == 8) {
+            printDelayed(ANSI_BG_RED ANSI_BOLD ANSI_FG_WHITE "\nLast line of the file should be a newline (\\n) character." ANSI_RESET ANSI_BOLD " Press any key to continue: " ANSI_RESET, 10, 0);
+            getch();
+        }  
     } while (1);
 }
 
@@ -323,7 +335,7 @@ static void drawFrame () {
         setCursor(mapColumns + 2, i + 2);
         printDelayed(B2V, 5, 0);        
     }
-    setCursor(1, mapColumns + 2);
+    setCursor(1, mapRows + 2);
     printDelayed(B2RU, 5, 0);
     for (int i = 0; i < mapColumns; i++)
         printDelayed(B2H, 5, 0);
@@ -350,25 +362,25 @@ void drawMap () {
             pos.y = i + 1;
             if (isBlock(pos)) {
                 printf(ANSI_BG_RED ANSI_FG_WHITE);
-                printDelayed("#", 50, 0);
+                printDelayed("#", 5, 0);
                 printf(ANSI_RESET);
                 fflush(stdout);
             }
             if (isPath(pos)) {
                 printf(ANSI_BG_WHITE ANSI_FG_BLACK);
-                printDelayed("1", 50, 0);
+                printDelayed("1", 5, 0);
                 printf(ANSI_RESET);
                 fflush(stdout);
             }
             if (isApple(pos)) {
                 printf(ANSI_BG_GREEN ANSI_FG_WHITE);
-                printDelayed("*", 50, 0);
+                printDelayed("*", 5, 0);
                 printf(ANSI_RESET);
                 fflush(stdout);
             }
             if (isPacMan(pos)) {
-                printf(ANSI_BG_YELLOW ANSI_FG_BLACK);
-                printDelayed("0", 50, 0);
+                printf(ANSI_BG_BLUE ANSI_FG_BLACK);
+                printDelayed("0", 5, 0);
                 printf(ANSI_RESET);
                 fflush(stdout);
             }                                    
@@ -398,9 +410,9 @@ static Position nextPosition (Position pos, char ch) {
 static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
     char direction;
     if (moveFunction == NULL) {
-        setCursor(1, mapRows + 3);
-        eraseLine(mapRows + 3);                
-        printDelayed(" ? ", 50, 0);        
+        //setCursor(1, mapRows + 3);
+        //eraseLine(mapRows + 3);                
+        printDelayed("? ", 50, 0);        
         char ch;
         ch = getch();
         if (ch == '\e') {
@@ -418,25 +430,25 @@ static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
                 else {
                     setCursor(1, mapRows + 3);
                     eraseLine(mapRows + 3);
-                    printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET);
+                    printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET " ");
                     fflush(stdout);                      
-                    delay(200, 0);
+                    //delay(200, 0);
                     return 0;
                 }
             } else {
                 setCursor(1, mapRows + 3);
                 eraseLine(mapRows + 3);
-                printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET);
+                printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET " ");
                 fflush(stdout);  
-                delay(200, 0);              
+                //delay(200, 0);              
                 return 0;
             }
         } else {
             setCursor(1, mapRows + 3);
             eraseLine(mapRows + 3);
-            printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET);
+            printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET " ");
             fflush(stdout);  
-            delay(200, 0);
+            //delay(200, 0);
             return 0;
         }
     } else {
@@ -446,11 +458,15 @@ static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
     if (!canMove(newPos)) {
         setCursor(1, mapRows + 3);
         eraseLine(mapRows + 3);
-        printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "PacMan can not move in that direction. Try again." ANSI_RESET);
+        printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "PacMan can not move in that direction. Try again." ANSI_RESET " ");
         fflush(stdout);  
-        delay(200, 0);
+        //delay(200, 0);
         return 0;
     } else {
+        // update alert line
+        setCursor(1, mapRows + 3);
+        eraseLine(mapRows + 3);
+
         // update board
         setCursor(PacMan.location.x + 1, PacMan.location.y + 1);
         printf(ANSI_BG_WHITE ANSI_FG_BLACK);
@@ -474,10 +490,11 @@ static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
 
         // update map
         setCursor(PacMan.location.x + 1, PacMan.location.y + 1);
-        printf(ANSI_BG_YELLOW ANSI_FG_BLACK);
+        printf(ANSI_BG_BLUE ANSI_FG_BLACK);
         printf("0");
         printf(ANSI_RESET);
         fflush(stdout);
+        setCursor(1, mapRows + 3);
         return 1;
     }
 } 
@@ -485,7 +502,10 @@ static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
 void gameLoop () {
     setCursor(1, mapRows + 3);
     printDelayed(ANSI_BG_CYAN ANSI_FG_YELLOW ANSI_BOLD "You have to use Arrow Keys to move PacMan. Press any key to start the game ..." ANSI_RESET, 1, 0);
-    getch();    
+    getch();
+    time_t timeElapsed = time(NULL);
+    setCursor(1, mapRows + 3);
+    eraseLine(mapRows + 3);         
     while (PacMan.apples != totalApples) {
         if (playMode == 1)
             movePacMan(NULL);
@@ -494,8 +514,9 @@ void gameLoop () {
             exit(0);
         }
     }
+    timeElapsed = time(NULL) - timeElapsed;
     setCursor(1, mapRows + 3);
     eraseLine(mapRows + 3);
-    printDelayed(ANSI_BG_GREEN ANSI_FG_WHITE ANSI_BOLD "Pacman has eaten all the apples. Congratulations.\n" ANSI_RESET, 20, 0);
-    
+    printDelayed(ANSI_BG_GREEN ANSI_FG_WHITE ANSI_BOLD "PacMan has eaten all the apples. Congratulations.\n" ANSI_RESET, 20, 0);
+    printf(ANSI_BG_GREEN ANSI_FG_WHITE ANSI_BOLD "PacMan took %ld seconds to eat all foods.\n" ANSI_RESET, timeElapsed);
 }
