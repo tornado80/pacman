@@ -7,5 +7,5 @@ This project can run **only** on linux-based operating systems supporting **GNU 
 
 ## How to build the project?
 1. Change directory to project files.
-2. Type '$ make' and enter.
-3. Then run program with '$ ./main'.
+2. Type ```$ make``` and enter.
+3. Then run program with ```$ ./main```.
