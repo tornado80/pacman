@@ -368,7 +368,7 @@ void drawMap () {
             }
             if (isPath(pos)) {
                 printf(ANSI_BG_WHITE ANSI_FG_BLACK);
-                printDelayed("1", 5, 0);
+                printDelayed(" ", 5, 0);
                 printf(ANSI_RESET);
                 fflush(stdout);
             }
@@ -470,7 +470,7 @@ static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
         // update board
         setCursor(PacMan.location.x + 1, PacMan.location.y + 1);
         printf(ANSI_BG_WHITE ANSI_FG_BLACK);
-        printf("1");
+        printf(" ");
         printf(ANSI_RESET);
         fflush(stdout);
                      

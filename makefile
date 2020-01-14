@@ -1,6 +1,6 @@
 all : main
 
-main : linkedlist.o gui.o terminal.o game.o core.o 
+main : linkedlist.o gui.o terminal.o game.o core.o
 	gcc -o main terminal.o game.o gui.o core.o linkedlist.o
 
 gui.o : gui.c
