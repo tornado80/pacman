@@ -36,7 +36,7 @@ int main () {
     //greetUser();
     //showRules();
     initMap();
-    //setPlayMode();
-    //drawMap();
+    setPlayMode();
+    drawMap();
     gameLoop();
 }

@@ -1,7 +1,9 @@
 #include "core.h"
 #include "queue.h"
+#include "stack.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "gui.h"
 
 typedef struct {
     int* distances; // store min distance to that node from origin
@@ -10,10 +12,8 @@ typedef struct {
 } BFSResult;
 typedef BFSResult* BFSResultPtr;
 
-static BFSResultPtr BFSResults; // stores all bfs results
 static int** Graph; // for each node in map grid stores adjacent nodes
-
-char aiMove (const char* MapGrid, Position PacManLocation, int PacManApples, int MapApples, int MapRows, int MapColumns) {}
+static Queue Moves = {NULL, NULL};
 
 /* Convert Grid to Graph */
 static int** GridToGraph (const char* grid, int gridRows, int gridColumns) {
@@ -59,7 +59,7 @@ static int** GridToGraph (const char* grid, int gridRows, int gridColumns) {
 }
 
 /* BFS Algorithm */
-static BFSResultPtr bfs (int** graph, int gridRows, int gridColumns, int origin) {
+static int bfs (int** graph, int gridRows, int gridColumns, int origin, BFSResultPtr* resultPtr) {
     // Search queue for bfs algorithm
     Queue searchQueue = {NULL, NULL};
 
@@ -68,6 +68,9 @@ static BFSResultPtr bfs (int** graph, int gridRows, int gridColumns, int origin)
 
     // curent vertex linear index for iteration
     int curVertix;
+
+    // finding nearest apple
+    int minDistance = gridColumns + gridRows, nextAppleIndex;
 
     // allocated memory for visited nodes and initialize it to zero
     int* visited = (int*) malloc(sizeof(int) * gridRows * gridColumns);
@@ -94,6 +97,12 @@ static BFSResultPtr bfs (int** graph, int gridRows, int gridColumns, int origin)
                 result->path[graph[curVertix][i]] = curVertix; // update father
                 visited[graph[curVertix][i]] = 1; // mark as visited
                 enQueue(&searchQueue, graph[curVertix][i]);
+                if (isApple(toPosGen(graph[curVertix][i], gridColumns))) {
+                    if (result->distances[graph[curVertix][i]] < minDistance) {                        
+                        minDistance = result->distances[graph[curVertix][i]];
+                        nextAppleIndex = graph[curVertix][i];
+                    }
+                }
             }
         } // end for
     } // end while
@@ -101,7 +110,11 @@ static BFSResultPtr bfs (int** graph, int gridRows, int gridColumns, int origin)
     // free memory allocated by visited
     free(visited);
 
-    return result;
+    // save results
+    *resultPtr = result;
+
+    // return next apple index   
+    return nextAppleIndex;
 }
 
 /* Find shortest paths and routes */
@@ -112,35 +125,65 @@ void aiSetup (const char* MapGrid, Position PacManLocation, int MapApples, int M
     // setup graph from grid
     Graph = GridToGraph(MapGrid, MapRows, MapColumns);
 
-    /*
-    // test graph
-    FILE * stream = fopen("grah.txt", "w");
-    for (int i = 0; i < MapRows * MapColumns; i++) {
-        if (Graph[i] != NULL)
-        fprintf(stream, "index %d : adjacents %d %d %d %d\n", i, Graph[i][0], Graph[i][1], Graph[i][2], Graph[i][3]);
-    }
-    fclose(stream);
-    // test bfs
-    int now;
-    FILE * stream = fopen("grah.txt", "w");
-    for (int i = 0; i < MapRows * MapColumns; i++) { 
-        if (!isBlock(toPosGen(i, MapColumns))) {       
-            fprintf(stream, "Distance of (%d, %d) from origin is %d\nPath: ", toPosGen(i, MapColumns).x, toPosGen(i, MapColumns).y, BFSResults[0].distances[i]);
-            now = i;
-            while (now != PacManLocationIndex) {
-                fprintf(stream, "(%d, %d) ", toPosGen(now, MapColumns).x, toPosGen(now, MapColumns).y);
-                now = BFSResults[0].path[now];
-            }
-            fprintf(stream, "\n");
+    // apples locations
+    int* apples = malloc(sizeof(int) * MapApples);
+
+    // call bfs consequently for shortest paths
+    StackNodePtr tempStack = NULL;
+    BFSResultPtr bfs_result_ptr;
+    int source, destination, current;
+    source = PacManLocationIndex;
+    for (int i = 0; i < MapApples; i++) {
+        current = destination = bfs(Graph, MapRows, MapColumns, source, &bfs_result_ptr);
+
+        // add apple index
+        apples[i] = destination;
+
+        // eat apple
+        setMap(toPosGen(destination, MapColumns), '1'); 
+
+        // finding path
+        while (current != source) {
+            pushStack(&tempStack, current);
+            current = bfs_result_ptr->path[current];
         }
+
+        // moving for next iteration
+        source = destination;
+
+        // finding exact path
+        while (!isStackEmpty(tempStack)) {
+            current = popStack(&tempStack);
+            enQueue(&Moves, current);
+        }
+
+        // deleting bfs allocated memory
+        free(bfs_result_ptr->distances);
+        free(bfs_result_ptr->path);
+        free(bfs_result_ptr);
     }
-    fclose(stream);      
-    */
 
-    // allocate memory for bfs results
-    //BFSResults = (BFSResultPtr) malloc(sizeof(BFSResult) * (MapApples + 1));
+    // delete graph memory
+    for (int i = 0; i < MapColumns * MapRows; i++)
+        free(Graph[i]);
+    free(Graph);
 
-    // call bfs for origin as pac man location
-    //BFSResults[0] = bfs(Graph, MapRows, MapColumns, PacManLocationIndex);
-    
+    // recover apples
+    for (int i = 0; i < MapApples; i++)
+        setMap(toPosGen(apples[i], MapColumns), '*'); 
+    free(apples);
+}
+
+char aiMove (Position PacManLocation, int MapColumns) {
+    Position next = toPosGen(deQueue(&Moves), MapColumns);
+    delay(250, 0);
+    if (nextPosition(PacManLocation, 'u').x == next.x && nextPosition(PacManLocation, 'u').y == next.y) {
+        return 'u';
+    } else if (nextPosition(PacManLocation, 'd').x == next.x && nextPosition(PacManLocation, 'd').y == next.y) {
+        return 'd';
+    } else if (nextPosition(PacManLocation, 'l').x == next.x && nextPosition(PacManLocation, 'l').y == next.y) {
+        return 'l';
+    } else if (nextPosition(PacManLocation, 'r').x == next.x && nextPosition(PacManLocation, 'r').y == next.y) {
+        return 'r';
+    }
 }

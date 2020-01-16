@@ -12,8 +12,10 @@ int isPacMan (Position pos);
 int toLinearGen (Position pos, int gridCols);
 Position toPosGen (int linearPos, int gridCols);
 Position nextPosition (Position pos, char ch);
+void setMap (Position pos, char ch);
 int canMove (Position pos);
 void initMap ();
 void setPlayMode ();
 void gameLoop ();
 void drawMap ();
+

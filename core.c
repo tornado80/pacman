@@ -8,7 +8,7 @@
 #include "linkedlist.h"
 #include "ai.h"
 
-static int playMode = 2; // 1 is manual, 2 is auto(ai)
+static int playMode; // 1 is manual, 2 is auto(ai)
 
 static struct {
     char* fileName;
@@ -61,7 +61,7 @@ Position toPosGen (int linearPos, int gridCols) {
 } 
 
 /* Set a given position of map a character */
-static void setMap (Position pos, char ch) {
+void setMap (Position pos, char ch) {
     *(Map.grid + toLinear(pos)) = ch;
 }
 
@@ -457,7 +457,7 @@ Position nextPosition (Position pos, char ch) {
     return pos;                 
 }
 
-static int movePacMan (char (*moveFunction) (char *, Position, int, int, int, int)) {
+static int movePacMan (char (*moveFunction) (Position, int)) {
     char direction;
     if (moveFunction == NULL) {               
         printDelayed("? ", 50, 0);        
@@ -497,7 +497,7 @@ static int movePacMan (char (*moveFunction) (char *, Position, int, int, int, in
             return 0;
         }
     } else {
-        direction = moveFunction(Map.grid, PacMan.location, PacMan.apples, Map.apples, Map.rows, Map.columns);         
+        direction = moveFunction(PacMan.location, Map.columns);         
     }
     Position newPos = nextPosition(PacMan.location, direction);
     if (!canMove(newPos)) {
@@ -544,8 +544,8 @@ void gameLoop () {
     time_t timeElapsed = time(NULL);
     if (playMode == 2) {
         aiSetup(Map.grid, PacMan.location, Map.apples, Map.rows, Map.columns);
-        //while (PacMan.apples != Map.apples)
-        //    movePacMan(aiMove);      
+        while (PacMan.apples != Map.apples)
+            movePacMan(aiMove);      
     } else if (playMode == 1) {
         setCursor(1, Map.rows + 3);
         eraseLine(Map.rows + 3); 
