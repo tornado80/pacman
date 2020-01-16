@@ -1,7 +1,7 @@
 all : main
 
-main : linkedlist.o gui.o terminal.o game.o core.o queue.o ai.o
-	gcc -o main terminal.o game.o gui.o core.o linkedlist.o queue.o ai.o
+main : linkedlist.o gui.o terminal.o game.o core.o queue.o ai.o stack.o
+	gcc -o main terminal.o game.o gui.o core.o linkedlist.o queue.o ai.o stack.o
 
 gui.o : gui.c
 	gcc -c gui.c
@@ -11,6 +11,9 @@ queue.o : queue.c
 
 core.o : core.c
 	gcc -c core.c
+
+stack.o : stack.c
+	gcc -c stack.c
 
 linkedlist.o : linkedlist.c
 	gcc -c linkedlist.c
