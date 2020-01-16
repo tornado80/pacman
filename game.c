@@ -33,8 +33,8 @@ void showRules () {
 } 
 
 int main () {
-    //greetUser();
-    //showRules();
+    greetUser();
+    showRules();
     initMap();
     setPlayMode();
     drawMap();
