@@ -6,19 +6,17 @@
 #include "core.h"
 #include "config.h"
 #include "linkedlist.h"
+#include "ai.h"
 
-static char* mapFileName = NULL; 
-static char* map = NULL;
-static int mapRows;
-static int mapColumns;
-static int totalApples;
-static int playMode; // 1 is manual, 2 is auto(ai)
+static int playMode = 2; // 1 is manual, 2 is auto(ai)
 
-/* starting position is (1, 1) */
-typedef struct {
-    int x;
-    int y;
-} Position;
+static struct {
+    char* fileName;
+    char* grid;
+    int rows;
+    int columns;
+    int apples;
+} Map = {NULL, NULL};
 
 static struct {
     Position location;
@@ -28,8 +26,51 @@ static struct {
     int time;
 } PacMan; 
 
+/* Return linear format of a position used in indexing Map.grid */
+static int toLinear (Position pos) {
+    return Map.columns * (pos.y - 1) - 1 + pos.x; // -1 is for zero-indexed of Map.grid
+}
 
-/* Check if char is a valid in map */
+/* 
+Return linear format of a position used in indexing zero-base grid
+This function use a general grid column count
+*/
+int toLinearGen (Position pos, int gridCols) {
+    return gridCols * (pos.y - 1) - 1 + pos.x; // -1 is for zero-indexed of Map.grid
+}
+
+/* Return position format of a linear indexing of Map.grid */
+static Position toPos (int linearPos) {
+    linearPos++; // convert zero-indexed of Map.grid to 1-indexed
+    Position pos;
+    pos.y = linearPos/Map.columns + (linearPos%Map.columns == 0 ? 0 : 1);
+    pos.x = linearPos%Map.columns == 0 ? Map.columns : linearPos%Map.columns; 
+    return pos;
+} 
+
+/* 
+Return position format of a linear indexing of zero-base grid
+This function use a general grid column count
+*/
+Position toPosGen (int linearPos, int gridCols) {
+    linearPos++; // convert zero-indexed of Map.grid to 1-indexed
+    Position pos;
+    pos.y = linearPos/gridCols + (linearPos%gridCols == 0 ? 0 : 1);
+    pos.x = linearPos%gridCols == 0 ? gridCols : linearPos%gridCols; 
+    return pos;
+} 
+
+/* Set a given position of map a character */
+static void setMap (Position pos, char ch) {
+    *(Map.grid + toLinear(pos)) = ch;
+}
+
+/* Get the character of given position of map */
+static char getMap (Position pos) {
+    return *(Map.grid + toLinear(pos));
+}
+
+/* Check if char is a valid in Map.grid */
 static int isMapValidCharacter (char ch) {
     if (ch != '#' && ch != '0' && ch != '1' && ch != '*')
         return 0;
@@ -38,7 +79,7 @@ static int isMapValidCharacter (char ch) {
 }
 
 /* 
-Read the map data (if possible) from file and writes it in an array 
+Read the Map.grid data (if possible) from file and writes it in an array 
 Also checks for illegal characters in file
 */
 static int importMap () {
@@ -46,13 +87,13 @@ static int importMap () {
     printf(ANSI_SAVE_CURSOR);
     fflush(stdout);
     printDelayed(ANSI_BG_CYAN ANSI_FG_WHITE "Opening ", 10, 0);
-    printDelayed(mapFileName, 10, 0);
+    printDelayed(Map.fileName, 10, 0);
     printf(ANSI_RESET);
     fflush(stdout);    
     delay(0, 1);
 
     // Open file
-    FILE *stream = fopen(mapFileName, "r");
+    FILE *stream = fopen(Map.fileName, "r");
     if (stream == NULL)
         return -1;
 
@@ -68,7 +109,7 @@ static int importMap () {
 
     // Now reading file
     char ch;
-    int maxLineLength = 0, thisLineLength = 0, mapFileLength = 0, lineNumbers = 0, countPacMan = 0;
+    int maxLineLength = 0, thisLineLength = 0, mapFileLength = 0, lineNumbers = 0, countPacMan = 0, linearPacManPosition = 0;;
     LinkedListData newChar;
     LinkedListNodePtr mapFile = NULL, curMapFileChar;    
     while ((ch = getc(stream)) != EOF) {
@@ -101,8 +142,7 @@ static int importMap () {
                 // ensure there is one pacman in board also setup pacman
                 if (ch == '0') {                                      
                     countPacMan++;
-                    Position p = {mapFileLength, 0};
-                    PacMan.location = p;
+                    linearPacManPosition = mapFileLength;
                     PacMan.apples = 0;
                     PacMan.path = 0;
                     PacMan.score = 0;
@@ -111,7 +151,7 @@ static int importMap () {
 
                 // count apples
                 if (ch == '*') {
-                    totalApples++;
+                    Map.apples++;
                 }
 
                 //simple check            
@@ -135,19 +175,18 @@ static int importMap () {
     if (countPacMan != 1)
         return 6;
 
-    // Importing map
-    map = malloc(sizeof(char) * mapFileLength);
+    // Importing Map.grid data read from file to memory
+    Map.grid = malloc(sizeof(char) * mapFileLength);
     curMapFileChar = mapFile;
     for (int i = 0; i < mapFileLength; i++) {
-        *(map + i) = curMapFileChar->data.char_value;
+        *(Map.grid + i) = curMapFileChar->data.char_value;
         curMapFileChar = curMapFileChar->next;
     }
-    mapRows = lineNumbers;
-    mapColumns = maxLineLength;
+    Map.rows = lineNumbers;
+    Map.columns = maxLineLength;
 
     // Update pacman exact position
-    PacMan.location.y = PacMan.location.x/mapColumns + (PacMan.location.x%mapColumns == 0 ? 0 : 1);
-    PacMan.location.x = PacMan.location.x%mapColumns == 0 ? mapColumns : PacMan.location.x%mapColumns;    
+    PacMan.location = toPos(linearPacManPosition - 1); // -1 is for zero-indexed of   
 
     // Free memory allocated by linked list
     deleteLinkedList(&mapFile);
@@ -159,7 +198,7 @@ static int importMap () {
     return 1;      
 }
 
-/* Prompts user for map file and initializes map array. */
+/* Prompts user for Map.grid file and initializes Map.grid array. */
 void initMap () {
     // declarations
     int feedback, mapFileNameLength;
@@ -168,11 +207,11 @@ void initMap () {
 
     do {
         // Reset some variables
-        totalApples = 0;
-        if (map != NULL)
-            free(map);
-        if (mapFileName != NULL)
-            free(mapFileName);
+        Map.apples = 0;
+        if (Map.grid != NULL)
+            free(Map.grid);
+        if (Map.fileName != NULL)
+            free(Map.fileName);
 
         // Prompt for file name
         clearScreen();
@@ -187,9 +226,9 @@ void initMap () {
 
         // converting the linked list to string
         curFileNameChar = fileName;      
-        mapFileName = malloc(sizeof(char) * (mapFileNameLength + 1)); // plus 1 is for '\0'
+        Map.fileName = malloc(sizeof(char) * (mapFileNameLength + 1)); // plus 1 is for '\0'
         for (int i = 0; i < mapFileNameLength + 1; i++) { 
-            *(mapFileName + i) = curFileNameChar->data.char_value;
+            *(Map.fileName + i) = curFileNameChar->data.char_value;
             curFileNameChar = curFileNameChar->next;
         }
 
@@ -266,45 +305,56 @@ void setPlayMode () {
     delay(0, 1);
 }
 
-/* Check if given position is in map */
-static int isInMap (Position pos) {
-    if (pos.x >= 1 && pos.x <= mapColumns && pos.y >= 1 && pos.y <= mapRows)
+/* Check if given position is in Map.grid */
+int isInMap (Position pos) {
+    if (pos.x >= 1 && pos.x <= Map.columns && pos.y >= 1 && pos.y <= Map.rows)
         return 1;
     else
         return 0;
 }
 
-/* Return linear format of a position used in indexing map */
-static char * toLinear (Position pos) {
-    return map + mapColumns * (pos.y - 1) - 1 + pos.x;
-}
-
 /* Check if given position is a block */
-static int isBlock (Position pos) {
+int isBlock (Position pos) {
     if (isInMap(pos))
-        if (*toLinear(pos) == '#')
+        if (getMap(pos) == '#')
             return 1;
         else
             return 0;
     else
         return 0;
+}
+
+/* Draws a Block, the cursor should have been set before this command */ 
+static void drawBlock (int delay_ms, int delay_s) {
+    printf(ANSI_BG_RED ANSI_FG_WHITE);
+    printDelayed("#", delay_ms, delay_s);
+    printf(ANSI_RESET);
+    fflush(stdout);
 }
 
 /* Check if given position is a path */
-static int isPath (Position pos) {
+int isPath (Position pos) {
     if (isInMap(pos))
-        if (*toLinear(pos) == '1')
+        if (getMap(pos) == '1')
             return 1;
         else
             return 0;
     else
         return 0;
+}
+
+/* Draws a Path, the cursor should have been set before this command */ 
+static void drawPath(int delay_ms, int delay_s) {
+    printf(ANSI_BG_WHITE ANSI_FG_BLACK);
+    printDelayed("1", delay_ms, delay_s);
+    printf(ANSI_RESET);
+    fflush(stdout); 
 }
 
 /* Check if given position is pacman */
-static int isPacMan (Position pos) {
+int isPacMan (Position pos) {
     if (isInMap(pos))
-        if (*toLinear(pos) == '0')
+        if (getMap(pos) == '0')
             return 1;
         else
             return 0;
@@ -312,32 +362,48 @@ static int isPacMan (Position pos) {
         return 0;
 }
 
+/* Draws a PacMan , the cursor should have been set before this command */ 
+static void drawPacMan(int delay_ms, int delay_s) {
+    printf(ANSI_BG_BLUE ANSI_FG_BLACK);
+    printDelayed("0", delay_ms, delay_s);
+    printf(ANSI_RESET);
+    fflush(stdout);   
+}
+
 /* Check if given position is apple */
-static int isApple (Position pos) {
+int isApple (Position pos) {
     if (isInMap(pos))
-        if (*toLinear(pos) == '*')
+        if (getMap(pos) == '*')
             return 1;
         else
             return 0;
     else
         return 0;
+}
+
+/* Draws an Apple , the cursor should have been set before this command */ 
+static void drawApple(int delay_ms, int delay_s) {
+    printf(ANSI_BG_GREEN ANSI_FG_WHITE);
+    printDelayed("*", delay_ms, delay_s);
+    printf(ANSI_RESET);
+    fflush(stdout);    
 }
 
 static void drawFrame () {
     clearScreen();
     printDelayed(B2RD, 5, 0);
-    for (int i = 0; i < mapColumns; i++)
+    for (int i = 0; i < Map.columns; i++)
         printDelayed(B2H, 5, 0);
     printDelayed(B2LD, 5, 0);
-    for (int i = 0; i < mapRows; i++) {
+    for (int i = 0; i < Map.rows; i++) {
         setCursor(1, i + 2);
         printDelayed(B2V, 5, 0);
-        setCursor(mapColumns + 2, i + 2);
+        setCursor(Map.columns + 2, i + 2);
         printDelayed(B2V, 5, 0);        
     }
-    setCursor(1, mapRows + 2);
+    setCursor(1, Map.rows + 2);
     printDelayed(B2RU, 5, 0);
-    for (int i = 0; i < mapColumns; i++)
+    for (int i = 0; i < Map.columns; i++)
         printDelayed(B2H, 5, 0);
     printDelayed(B2LU, 5, 0);        
 }
@@ -353,49 +419,33 @@ void drawMap () {
     delay(0, 1);
     drawFrame();
 
-    // drawing map
+    // drawing Map.grid
     Position pos;
-    for (int i = 0; i < mapRows; i++) {
-        for (int j = 0; j < mapColumns; j++) {
+    for (int i = 0; i < Map.rows; i++) {
+        for (int j = 0; j < Map.columns; j++) {
             setCursor(2 + j, 2 + i);
             pos.x = j + 1;
             pos.y = i + 1;
-            if (isBlock(pos)) {
-                printf(ANSI_BG_RED ANSI_FG_WHITE);
-                printDelayed("#", 5, 0);
-                printf(ANSI_RESET);
-                fflush(stdout);
-            }
-            if (isPath(pos)) {
-                printf(ANSI_BG_WHITE ANSI_FG_BLACK);
-                printDelayed("1", 5, 0);
-                printf(ANSI_RESET);
-                fflush(stdout);
-            }
-            if (isApple(pos)) {
-                printf(ANSI_BG_GREEN ANSI_FG_WHITE);
-                printDelayed("*", 5, 0);
-                printf(ANSI_RESET);
-                fflush(stdout);
-            }
-            if (isPacMan(pos)) {
-                printf(ANSI_BG_BLUE ANSI_FG_BLACK);
-                printDelayed("0", 5, 0);
-                printf(ANSI_RESET);
-                fflush(stdout);
-            }                                    
+            if (isBlock(pos))
+                drawBlock(5, 0);
+            if (isPath(pos))
+                drawPath(5, 0);
+            if (isApple(pos))
+                drawApple(5, 0);
+            if (isPacMan(pos))
+                drawPacMan(5, 0);                                    
         }
     }
 }
 
-static int canMove (Position pos) {
+int canMove (Position pos) {
     if (!isBlock(pos) && isInMap(pos))
         return 1;
     else
         return 0;
 }
 
-static Position nextPosition (Position pos, char ch) {
+Position nextPosition (Position pos, char ch) {
     if (ch == 'u')
         pos.y--;
     if (ch == 'd')
@@ -407,11 +457,9 @@ static Position nextPosition (Position pos, char ch) {
     return pos;                 
 }
 
-static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
+static int movePacMan (char (*moveFunction) (char *, Position, int, int, int, int)) {
     char direction;
-    if (moveFunction == NULL) {
-        //setCursor(1, mapRows + 3);
-        //eraseLine(mapRows + 3);                
+    if (moveFunction == NULL) {               
         printDelayed("? ", 50, 0);        
         char ch;
         ch = getch();
@@ -428,95 +476,85 @@ static int movePacMan (char (*moveFunction) (char *, Position, int, int, int)) {
                 else if (ch == 'D')
                     direction = 'l';   
                 else {
-                    setCursor(1, mapRows + 3);
-                    eraseLine(mapRows + 3);
+                    setCursor(1, Map.rows + 3);
+                    eraseLine(Map.rows + 3);
                     printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET " ");
                     fflush(stdout);                      
-                    //delay(200, 0);
                     return 0;
                 }
             } else {
-                setCursor(1, mapRows + 3);
-                eraseLine(mapRows + 3);
+                setCursor(1, Map.rows + 3);
+                eraseLine(Map.rows + 3);
                 printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET " ");
-                fflush(stdout);  
-                //delay(200, 0);              
+                fflush(stdout);              
                 return 0;
             }
         } else {
-            setCursor(1, mapRows + 3);
-            eraseLine(mapRows + 3);
+            setCursor(1, Map.rows + 3);
+            eraseLine(Map.rows + 3);
             printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "Illegal key. Use arrow keys." ANSI_RESET " ");
             fflush(stdout);  
-            //delay(200, 0);
             return 0;
         }
     } else {
-        direction = moveFunction(map, PacMan.location, totalApples, PacMan.apples, PacMan.path);            
+        direction = moveFunction(Map.grid, PacMan.location, PacMan.apples, Map.apples, Map.rows, Map.columns);         
     }
     Position newPos = nextPosition(PacMan.location, direction);
     if (!canMove(newPos)) {
-        setCursor(1, mapRows + 3);
-        eraseLine(mapRows + 3);
+        setCursor(1, Map.rows + 3);
+        eraseLine(Map.rows + 3);
         printf(ANSI_BG_RED ANSI_FG_WHITE ANSI_BOLD "PacMan can not move in that direction. Try again." ANSI_RESET " ");
         fflush(stdout);  
-        //delay(200, 0);
         return 0;
     } else {
         // update alert line
-        setCursor(1, mapRows + 3);
-        eraseLine(mapRows + 3);
+        setCursor(1, Map.rows + 3);
+        eraseLine(Map.rows + 3);
 
         // update board
         setCursor(PacMan.location.x + 1, PacMan.location.y + 1);
-        printf(ANSI_BG_WHITE ANSI_FG_BLACK);
-        printf("1");
-        printf(ANSI_RESET);
-        fflush(stdout);
+        drawPath(0, 0);
                      
-        // update pacman and map
+        // update pacman and Map.grid
         if (isApple(newPos)) {
-            *toLinear(PacMan.location) = '1';
+            setMap(PacMan.location, '1');
             PacMan.location = newPos;
             PacMan.apples++;
             PacMan.path++;
-            *toLinear(PacMan.location) = '0';           
+            setMap(PacMan.location, '0');           
         } else if (isPath(newPos)) {
-            *toLinear(PacMan.location) = '1';
+            setMap(PacMan.location, '1');
             PacMan.location = newPos;
             PacMan.path++;
-            *toLinear(PacMan.location) = '0';            
+            setMap(PacMan.location, '0');            
         }
 
-        // update map
+        // update Map.grid
         setCursor(PacMan.location.x + 1, PacMan.location.y + 1);
-        printf(ANSI_BG_BLUE ANSI_FG_BLACK);
-        printf("0");
-        printf(ANSI_RESET);
-        fflush(stdout);
-        setCursor(1, mapRows + 3);
+        drawPacMan(0, 0);
+        setCursor(1, Map.rows + 3);
         return 1;
     }
 } 
 
 void gameLoop () {
-    setCursor(1, mapRows + 3);
+    setCursor(1, Map.rows + 3);
     printDelayed(ANSI_BG_CYAN ANSI_FG_YELLOW ANSI_BOLD "You have to use Arrow Keys to move PacMan. Press any key to start the game ..." ANSI_RESET, 1, 0);
     getch();
     time_t timeElapsed = time(NULL);
-    setCursor(1, mapRows + 3);
-    eraseLine(mapRows + 3);         
-    while (PacMan.apples != totalApples) {
-        if (playMode == 1)
-            movePacMan(NULL);
-        else {
-            printf("Not available yet!");
-            exit(0);
-        }
+    if (playMode == 2) {
+        aiSetup(Map.grid, PacMan.location, Map.apples, Map.rows, Map.columns);
+        //while (PacMan.apples != Map.apples)
+        //    movePacMan(aiMove);      
+    } else if (playMode == 1) {
+        setCursor(1, Map.rows + 3);
+        eraseLine(Map.rows + 3); 
+        while (PacMan.apples != Map.apples)
+            movePacMan(NULL); 
     }
     timeElapsed = time(NULL) - timeElapsed;
-    setCursor(1, mapRows + 3);
-    eraseLine(mapRows + 3);
+    setCursor(1, Map.rows + 3);
+    eraseLine(Map.rows + 3);
     printDelayed(ANSI_BG_GREEN ANSI_FG_WHITE ANSI_BOLD "PacMan has eaten all the apples. Congratulations.\n" ANSI_RESET, 20, 0);
     printf(ANSI_BG_GREEN ANSI_FG_WHITE ANSI_BOLD "PacMan took %ld seconds to eat all foods.\n" ANSI_RESET, timeElapsed);
 }

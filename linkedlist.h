@@ -15,6 +15,6 @@ typedef struct linked_list_node LinkedListNode;
 typedef LinkedListNode* LinkedListNodePtr;
 
 void insertLinkedList (LinkedListNodePtr* lastNodePtr, LinkedListData newData);
-int isEmpty (LinkedListNodePtr firstNode);
 void printLinkedList (LinkedListNodePtr curNode, char type);
 void deleteLinkedList (LinkedListNodePtr* curNodePtr);
+int isLinkedListEmpty (LinkedListNodePtr firstNode);

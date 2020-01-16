@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include "linkedlist.h"
 
+/* Return 1 if linked list is empty otherwise 0 */
+int isLinkedListEmpty (LinkedListNodePtr firstNode) {
+    return firstNode == NULL;
+}
+
 /* 
 Insert a node at the end of the list 
 */
@@ -10,18 +15,13 @@ void insertLinkedList (LinkedListNodePtr* firstNodePtr, LinkedListData newData) 
     LinkedListNodePtr newNode = malloc(sizeof(LinkedListNode)), curNode = *firstNodePtr;
     newNode->data = newData;
     newNode->next = NULL;
-    if (isEmpty(*firstNodePtr))
+    if (isLinkedListEmpty(*firstNodePtr))
         *firstNodePtr = newNode;
     else {
         while (curNode->next != NULL)
             curNode = curNode->next;
         curNode->next = newNode;
     }
-}
-
-/* Return 1 if linked list is empty otherwise 0 */
-int isEmpty (LinkedListNodePtr firstNode) {
-    return firstNode == NULL;
 }
 
 /* 
