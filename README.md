@@ -1,5 +1,5 @@
 # Pac-Man
-Pac-Man Game Simulation & AI
+Pac-Man Game Simulation & AI\
 This project is licensed under MIT software licenses.
 
 ## Supported platforms
