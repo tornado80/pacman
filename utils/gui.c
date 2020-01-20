@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <time.h>
-#include "terminal.h"
+#include "./terminal.h"
 
 /* Delay for given miliseconds */
 void delay (int mili_seconds, int seconds) {

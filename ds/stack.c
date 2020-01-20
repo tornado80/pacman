@@ -1,5 +1,5 @@
-#include "stack.h"
-#include "stdlib.h"
+#include <stdlib.h>
+#include "./stack.h"
 
 int isStackEmpty(StackNodePtr stackTopNode) {
     return stackTopNode == NULL;

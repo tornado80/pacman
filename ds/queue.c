@@ -1,6 +1,6 @@
-#include "queue.h"
-#include "stdlib.h"
+#include <stdlib.h>
 #include <stdio.h>
+#include "./queue.h"
 
 int isQueueEmpty (const Queue q) {
     if (q.head == NULL && q.tail == NULL)

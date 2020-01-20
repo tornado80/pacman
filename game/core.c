@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
-#include "terminal.h"
-#include "gui.h"
-#include "core.h"
-#include "config.h"
-#include "linkedlist.h"
-#include "ai.h"
+#include "../utils/terminal.h"
+#include "../utils/gui.h"
+#include "./core.h"
+#include "./ai.h"
+#include "../utils/config.h"
+#include "../ds/linkedlist.h"
 
 static int playMode; // 1 is manual, 2 is auto(ai)
 

@@ -1,0 +1,19 @@
+{
+    "files.associations": {
+        "stdlib.h": "c",
+        "termios.h": "c",
+        "ctype.h": "c",
+        "terminal.h": "c",
+        "libraries.h": "c",
+        "includes.h": "c",
+        "time.h": "c",
+        "unistd.h": "c",
+        "stdio.h": "c",
+        "config.h": "c",
+        "core.h": "c",
+        "ai.h": "c",
+        "queue.h": "c",
+        "stack.h": "c",
+        "linkedlist.h": "c"
+    }
+}

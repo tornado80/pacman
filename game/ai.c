@@ -1,9 +1,10 @@
-#include "core.h"
-#include "queue.h"
-#include "stack.h"
+#include "./core.h"
+#include "../ds/queue.h"
+#include "../ds/stack.h"
+#include "../utils/gui.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "gui.h"
+
 
 typedef struct {
     int* distances; // store min distance to that node from origin

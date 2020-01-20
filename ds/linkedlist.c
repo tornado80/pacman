@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "linkedlist.h"
+#include "./linkedlist.h"
 
 /* Return 1 if linked list is empty otherwise 0 */
 int isLinkedListEmpty (LinkedListNodePtr firstNode) {
