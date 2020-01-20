@@ -281,7 +281,7 @@ void setPlayMode () {
     // prompt user
     char ch;
     do {
-        ch = getche();
+        ch = getch();
         if (ch == '1') {
             break;
         } else if (ch == '2') {
@@ -346,7 +346,7 @@ int isPath (Position pos) {
 /* Draws a Path, the cursor should have been set before this command */ 
 static void drawPath(int delay_ms, int delay_s) {
     printf(ANSI_BG_WHITE ANSI_FG_BLACK);
-    printDelayed("1", delay_ms, delay_s);
+    printDelayed(" ", delay_ms, delay_s);
     printf(ANSI_RESET);
     fflush(stdout); 
 }
@@ -364,7 +364,7 @@ int isPacMan (Position pos) {
 
 /* Draws a PacMan , the cursor should have been set before this command */ 
 static void drawPacMan(int delay_ms, int delay_s) {
-    printf(ANSI_BG_BLUE ANSI_FG_BLACK);
+    printf(ANSI_BG_BLUE ANSI_FG_WHITE);
     printDelayed("0", delay_ms, delay_s);
     printf(ANSI_RESET);
     fflush(stdout);   
@@ -540,7 +540,7 @@ static int movePacMan (char (*moveFunction) (Position, int)) {
 void gameLoop () {
     setCursor(1, Map.rows + 3);
     printDelayed(ANSI_BG_CYAN ANSI_FG_YELLOW ANSI_BOLD "You have to use Arrow Keys to move PacMan. Press any key to start the game ..." ANSI_RESET, 1, 0);
-    getch();
+    getche();
     time_t timeElapsed = time(NULL);
     if (playMode == 2) {
         aiSetup(Map.grid, PacMan.location, Map.apples, Map.rows, Map.columns);

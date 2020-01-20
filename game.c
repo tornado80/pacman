@@ -35,8 +35,12 @@ void showRules () {
 int main () {
     greetUser();
     showRules();
-    initMap();
-    setPlayMode();
-    drawMap();
-    gameLoop();
+    while(1) {
+        initMap();
+        setPlayMode();
+        drawMap();
+        gameLoop();
+        printDelayed(ANSI_BG_CYAN ANSI_FG_WHITE ANSI_BOLD "Press enter to play a new map" ANSI_RESET, 50, 0);
+        while (getchar() != '\n');
+    }
 }
