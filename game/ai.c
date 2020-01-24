@@ -71,7 +71,7 @@ static int bfs (int** graph, int gridRows, int gridColumns, int origin, BFSResul
     int curVertix;
 
     // finding nearest apple
-    int minDistance = gridColumns + gridRows, nextAppleIndex;
+    int minDistance = gridColumns * gridRows, nextAppleIndex = -1;
 
     // allocated memory for visited nodes and initialize it to zero
     int* visited = (int*) malloc(sizeof(int) * gridRows * gridColumns);
@@ -98,7 +98,7 @@ static int bfs (int** graph, int gridRows, int gridColumns, int origin, BFSResul
                 result->path[graph[curVertix][i]] = curVertix; // update father
                 visited[graph[curVertix][i]] = 1; // mark as visited
                 enQueue(&searchQueue, graph[curVertix][i]);
-                if (isApple(toPosGen(graph[curVertix][i], gridColumns))) {
+                if (isApple(toPosGen(graph[curVertix][i], gridColumns))) {                                      
                     if (result->distances[graph[curVertix][i]] < minDistance) {                        
                         minDistance = result->distances[graph[curVertix][i]];
                         nextAppleIndex = graph[curVertix][i];
