@@ -119,7 +119,7 @@ static int bfs (int** graph, int gridRows, int gridColumns, int origin, BFSResul
 }
 
 /* Find shortest paths and routes */
-void aiSetup (const char* MapGrid, Position PacManLocation, int MapApples, int MapRows, int MapColumns) {
+int aiSetup (const char* MapGrid, Position PacManLocation, int MapApples, int MapRows, int MapColumns) {
     // find pac man location linear index from position
     int PacManLocationIndex = toLinearGen(PacManLocation, MapColumns);
 
@@ -136,6 +136,10 @@ void aiSetup (const char* MapGrid, Position PacManLocation, int MapApples, int M
     source = PacManLocationIndex;
     for (int i = 0; i < MapApples; i++) {
         current = destination = bfs(Graph, MapRows, MapColumns, source, &bfs_result_ptr);
+
+        // check if pacman can move
+        if (destination == -1)
+            return -1;
 
         // add apple index
         apples[i] = destination;
@@ -177,7 +181,7 @@ void aiSetup (const char* MapGrid, Position PacManLocation, int MapApples, int M
 
 char aiMove (Position PacManLocation, int MapColumns) {
     Position next = toPosGen(deQueue(&Moves), MapColumns);
-    delay(250, 0);
+    delay(100, 0);
     if (nextPosition(PacManLocation, 'u').x == next.x && nextPosition(PacManLocation, 'u').y == next.y) {
         return 'u';
     } else if (nextPosition(PacManLocation, 'd').x == next.x && nextPosition(PacManLocation, 'd').y == next.y) {

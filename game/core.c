@@ -543,7 +543,7 @@ void gameLoop () {
     getche();
     time_t timeElapsed = time(NULL);
     if (playMode == 2) {
-        aiSetup(Map.grid, PacMan.location, Map.apples, Map.rows, Map.columns);
+        if(aiSetup(Map.grid, PacMan.location, Map.apples, Map.rows, Map.columns) == -1) exit(0);
         while (PacMan.apples != Map.apples)
             movePacMan(aiMove);      
     } else if (playMode == 1) {
